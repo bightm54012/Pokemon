@@ -10,12 +10,12 @@ import SwiftUI
 struct PokemonDetailView: View {
     @StateObject private var vm: PokemonDetailViewModel
     let idOrName: String
-
+    
     init(idOrName: String) {
         _vm = StateObject(wrappedValue: PokemonDetailViewModel(idOrName: idOrName))
         self.idOrName = idOrName
     }
-
+    
     var body: some View {
         VStack {
             if let p = vm.pokemon {
@@ -43,10 +43,6 @@ struct PokemonDetailView: View {
                             Text("ID: \(p.id)")
                                 .font(.subheadline)
                                 .foregroundColor(.gray)
-
-                            // 若你有更多屬性如 height, weight
-                            // Text("Height: \(p.height)")
-                            // Text("Weight: \(p.weight)")
                         }
 
                         Spacer()

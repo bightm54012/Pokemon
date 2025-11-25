@@ -8,79 +8,159 @@
 import UIKit
 
 class FeaturedCell: UICollectionViewCell {
-    private let imageView = UIImageView()
-    private let nameLabel = UILabel()
-    private let idLabel = UILabel()
-    let favoriteButton = UIButton(type: .system)
-
-    var favoriteButtonAction: (() -> Void)?
-
+    private let containerView = UIView()  // 圓角容器
+    private let stack = UIStackView()
+    
+    var pokemons: [Pokemon] = []
+    var favoriteAction: ((Pokemon) -> Void)?
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
-        setup()
+        setupCell()
+        setupStack()
     }
-
+    
     required init?(coder: NSCoder) {
         super.init(coder: coder)
-        setup()
+        setupCell()
+        setupStack()
     }
-
-    private func setup() {
-        imageView.contentMode = .scaleAspectFit
-        nameLabel.font = .systemFont(ofSize: 16, weight: .medium)
-        idLabel.font = .systemFont(ofSize: 14, weight: .regular)
-        favoriteButton.setImage(UIImage(systemName: "heart"), for: .normal)
-
-        contentView.addSubview(imageView)
-        contentView.addSubview(nameLabel)
-        contentView.addSubview(idLabel)
-        contentView.addSubview(favoriteButton)
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        nameLabel.translatesAutoresizingMaskIntoConstraints = false
-        idLabel.translatesAutoresizingMaskIntoConstraints = false
-        favoriteButton.translatesAutoresizingMaskIntoConstraints = false
-
+    
+    private func setupCell() {
+        backgroundColor = .clear
+        
+        layer.shadowColor = UIColor.black.cgColor
+        layer.shadowOpacity = 0.1
+        layer.shadowOffset = CGSize(width: 0, height: 2)
+        layer.shadowRadius = 4
+        clipsToBounds = false
+        
+        containerView.backgroundColor = .systemBackground
+        containerView.layer.cornerRadius = 12
+        containerView.layer.masksToBounds = true
+        containerView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(containerView)
+        
         NSLayoutConstraint.activate([
-            imageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
-            imageView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            imageView.widthAnchor.constraint(equalToConstant: 80),
-            imageView.heightAnchor.constraint(equalToConstant: 80),
-
-            nameLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 8),
-            nameLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-
-            idLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4),
-            idLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-
-            favoriteButton.topAnchor.constraint(equalTo: idLabel.bottomAnchor, constant: 8),
-            favoriteButton.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            favoriteButton.widthAnchor.constraint(equalToConstant: 24),
-            favoriteButton.heightAnchor.constraint(equalToConstant: 24)
+            containerView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
         ])
     }
     
-    func configure(with pokemon: Pokemon) {
-        nameLabel.text = pokemon.name
-        idLabel.text = "#\(pokemon.id)"
+    private func setupStack() {
+        stack.axis = .vertical
+        stack.spacing = 0
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(stack)
         
-        if let url = pokemon.imageURL {
-            Task { [weak self] in
-                guard let self = self else { return }
+        NSLayoutConstraint.activate([
+            stack.topAnchor.constraint(equalTo: containerView.topAnchor),
+            stack.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            stack.bottomAnchor.constraint(equalTo: containerView.bottomAnchor)
+        ])
+    }
+    
+    func configure(with pokemons: [Pokemon]) {
+        self.pokemons = pokemons
+        stack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        
+        for poke in pokemons {
+            let card = SinglePokemonCardView()
+            card.configure(with: poke)
+            card.favoriteButtonAction = { [weak self] in
+                self?.favoriteAction?(poke)
+            }
+            stack.addArrangedSubview(card)
+        }
+    }
+}
+
+// MARK: - Single Pokemon Card
+class SinglePokemonCardView: UIView {
+    private let imageView = UIImageView()
+    private let idLabel = UILabel()
+    private let nameLabel = UILabel()
+    private let typeLabel = UILabel()
+    let favoriteButton = UIButton(type: .system)
+    
+    var favoriteButtonAction: (() -> Void)?
+    
+    init() {
+        super.init(frame: .zero)
+        setupUI()
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupUI()
+    }
+    
+    private func setupUI() {
+        backgroundColor = .systemBackground
+        layer.cornerRadius = 0
+        
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.widthAnchor.constraint(equalToConstant: 60).isActive = true
+        imageView.heightAnchor.constraint(equalToConstant: 60).isActive = true
+        
+        idLabel.font = .systemFont(ofSize: 12)
+        nameLabel.font = .systemFont(ofSize: 14, weight: .medium)
+        typeLabel.font = .systemFont(ofSize: 12)
+        typeLabel.numberOfLines = 1
+        
+        favoriteButton.tintColor = .systemRed
+        favoriteButton.translatesAutoresizingMaskIntoConstraints = false
+        favoriteButton.widthAnchor.constraint(equalToConstant: 24).isActive = true
+        favoriteButton.heightAnchor.constraint(equalToConstant: 24).isActive = true
+        favoriteButton.addTarget(self, action: #selector(didTapFavorite), for: .touchUpInside)
+        
+        let middleStack = UIStackView(arrangedSubviews: [UIStackView(arrangedSubviews: [idLabel, nameLabel]), typeLabel])
+        middleStack.axis = .vertical
+        middleStack.spacing = 4
+        
+        let mainStack = UIStackView(arrangedSubviews: [imageView, middleStack, favoriteButton])
+        mainStack.axis = .horizontal
+        mainStack.alignment = .center
+        mainStack.spacing = 8
+        mainStack.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(mainStack)
+        
+        NSLayoutConstraint.activate([
+            mainStack.topAnchor.constraint(equalTo: topAnchor, constant: 4),
+            mainStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 4),
+            mainStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -4),
+            mainStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -4)
+        ])
+    }
+    
+    func configure(with poke: Pokemon) {
+        idLabel.text = "#\(poke.id)"
+        nameLabel.text = poke.name
+        typeLabel.text = poke.types.joined(separator: ", ")
+        
+        if let url = poke.imageURL {
+            Task {
                 let image = await ImageLoader.shared.load(url: url)
-                await MainActor.run {
-                    self.imageView.image = image
-                }
+                await MainActor.run { self.imageView.image = image }
             }
         } else {
             imageView.image = nil
         }
-
-        updateFavorite(isFav: FavoritesManager.shared.isFavorite(id: pokemon.id))
+        
+        updateFavorite(isFav: FavoritesManager.shared.isFavorite(id: poke.id))
     }
-
-
+    
     func updateFavorite(isFav: Bool) {
         let sym = isFav ? "heart.fill" : "heart"
         favoriteButton.setImage(UIImage(systemName: sym), for: .normal)
     }
+    
+    @objc private func didTapFavorite() {
+        favoriteButtonAction?()
+    }
 }
+
