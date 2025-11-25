@@ -5,22 +5,33 @@
 //  Created by Sharon Chao on 2025/11/25.
 //
 
-import Foundation
+import SwiftUI
+import Combine
 
-final class FavoritesManager {
+final class FavoritesManager: ObservableObject {
     static let shared = FavoritesManager()
+    
+    @Published private(set) var favoriteIDs: Set<Int>
     private let key = "favorites"
-    private var cache: Set<Int>
-
+    
     private init() {
         if let arr = UserDefaults.standard.array(forKey: key) as? [Int] {
-            cache = Set(arr)
-        } else { cache = [] }
+            favoriteIDs = Set(arr)
+        } else {
+            favoriteIDs = []
+        }
     }
-
-    func isFavorite(id: Int) -> Bool { cache.contains(id) }
+    
+    func isFavorite(id: Int) -> Bool {
+        favoriteIDs.contains(id)
+    }
+    
     func toggleFavorite(id: Int) {
-        if cache.contains(id) { cache.remove(id) } else { cache.insert(id) }
-        UserDefaults.standard.set(Array(cache), forKey: key)
+        if favoriteIDs.contains(id) {
+            favoriteIDs.remove(id)
+        } else {
+            favoriteIDs.insert(id)
+        }
+        UserDefaults.standard.set(Array(favoriteIDs), forKey: key)
     }
 }

@@ -22,7 +22,7 @@ class TypeCell: UICollectionViewCell {
             label.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             label.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
         ])
-        contentView.backgroundColor = .systemGray5
+        contentView.backgroundColor = .lightGray
         contentView.layer.cornerRadius = 8
     }
 

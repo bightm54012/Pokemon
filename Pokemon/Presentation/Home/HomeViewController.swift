@@ -7,6 +7,7 @@
 
 import UIKit
 import SwiftUI
+import Combine
 
 class HomeViewController: UIViewController {
     // MARK: - UI Elements
@@ -23,7 +24,7 @@ class HomeViewController: UIViewController {
         layout.scrollDirection = .horizontal
         // 一排三個卡片
         let cardWidth = UIScreen.main.bounds.width / 3 - 24 / 3 // margin 調整
-        layout.itemSize = CGSize(width: cardWidth, height: 200)
+        layout.itemSize = CGSize(width: cardWidth, height: 240)
         layout.minimumLineSpacing = 12
         let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
         cv.showsHorizontalScrollIndicator = false
@@ -74,6 +75,7 @@ class HomeViewController: UIViewController {
     private var featuredPokemons: [Pokemon] = []
     private var types: [String] = []
     private var regions: [String] = []
+    private var favoritesCancellable: AnyCancellable?
     
     // MARK: - Lifecycle
     
@@ -85,6 +87,10 @@ class HomeViewController: UIViewController {
         setupCollectionViews()
         setupActions()
         loadData()
+        
+        favoritesCancellable = FavoritesManager.shared.$favoriteIDs.sink { [weak self] _ in
+            self?.featuredCollection.reloadData()
+        }
     }
     
     private func setupViews() {
@@ -122,7 +128,7 @@ class HomeViewController: UIViewController {
             content.trailingAnchor.constraint(equalTo: scroll.frameLayoutGuide.trailingAnchor, constant: -16),
             content.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor, constant: -16),
             
-            featuredCollection.heightAnchor.constraint(equalToConstant: 200),
+            featuredCollection.heightAnchor.constraint(equalToConstant: 240),
             typesCollection.heightAnchor.constraint(equalToConstant: 50)
         ])
         
@@ -204,10 +210,20 @@ extension HomeViewController: UICollectionViewDataSource, UICollectionViewDelega
             let end = min(start + 3, featuredPokemons.count)
             let pokesForCell = Array(featuredPokemons[start..<end])
             cell.configure(with: pokesForCell)
+            
+            // favorite 按鈕
             cell.favoriteAction = { poke in
                 FavoritesManager.shared.toggleFavorite(id: poke.id)
                 collectionView.reloadData()
             }
+            
+            // 3. 點擊回傳 Pokémon
+            cell.didSelectPokemon = { [weak self] poke in
+                let detailView = PokemonDetailView(idOrName: "\(poke.id)")
+                let vc = UIHostingController(rootView: detailView)
+                self?.navigationController?.pushViewController(vc, animated: true)
+            }
+            
             return cell
         } else {
             guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "TypeCell", for: indexPath) as? TypeCell else {
@@ -239,7 +255,7 @@ extension HomeViewController: UICollectionViewDelegateFlowLayout {
                         layout collectionViewLayout: UICollectionViewLayout,
                         sizeForItemAt indexPath: IndexPath) -> CGSize {
         if collectionView == featuredCollection {
-            return CGSize(width: 220, height: 220)
+            return CGSize(width: 280, height: 240)
         }
         return CGSize(width: 100, height: 50) // types collection
     }

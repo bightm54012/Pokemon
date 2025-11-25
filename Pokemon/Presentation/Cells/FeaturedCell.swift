@@ -8,10 +8,11 @@
 import UIKit
 
 class FeaturedCell: UICollectionViewCell {
-    private let containerView = UIView()  // 圓角容器
+    private let containerView = UIView()
     private let stack = UIStackView()
     
     var pokemons: [Pokemon] = []
+    var didSelectPokemon: ((Pokemon) -> Void)?
     var favoriteAction: ((Pokemon) -> Void)?
     
     override init(frame: CGRect) {
@@ -28,6 +29,7 @@ class FeaturedCell: UICollectionViewCell {
     
     private func setupCell() {
         backgroundColor = .clear
+        contentView.backgroundColor = .clear
         
         layer.shadowColor = UIColor.black.cgColor
         layer.shadowOpacity = 0.1
@@ -40,12 +42,12 @@ class FeaturedCell: UICollectionViewCell {
         containerView.layer.masksToBounds = true
         containerView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(containerView)
-        
+
         NSLayoutConstraint.activate([
-            containerView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
+            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 0),
+            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: 0),
+            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12)
         ])
     }
     
@@ -73,8 +75,20 @@ class FeaturedCell: UICollectionViewCell {
             card.favoriteButtonAction = { [weak self] in
                 self?.favoriteAction?(poke)
             }
+            
+            let tap = UITapGestureRecognizer(target: self, action: #selector(cardTapped(_:)))
+            card.addGestureRecognizer(tap)
+            card.isUserInteractionEnabled = true
+            
             stack.addArrangedSubview(card)
         }
+    }
+    
+    @objc private func cardTapped(_ gesture: UITapGestureRecognizer) {
+        guard let card = gesture.view as? SinglePokemonCardView,
+              let index = stack.arrangedSubviews.firstIndex(of: card) else { return }
+        let poke = pokemons[index]
+        didSelectPokemon?(poke)
     }
 }
 
@@ -106,6 +120,8 @@ class SinglePokemonCardView: UIView {
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.widthAnchor.constraint(equalToConstant: 60).isActive = true
         imageView.heightAnchor.constraint(equalToConstant: 60).isActive = true
+        imageView.backgroundColor = .systemGray5
+        imageView.layer.cornerRadius = 8
         
         idLabel.font = .systemFont(ofSize: 12)
         nameLabel.font = .systemFont(ofSize: 14, weight: .medium)
@@ -120,7 +136,8 @@ class SinglePokemonCardView: UIView {
         
         let middleStack = UIStackView(arrangedSubviews: [UIStackView(arrangedSubviews: [idLabel, nameLabel]), typeLabel])
         middleStack.axis = .vertical
-        middleStack.spacing = 4
+        middleStack.spacing = 12
+        middleStack.alignment = .leading
         
         let mainStack = UIStackView(arrangedSubviews: [imageView, middleStack, favoriteButton])
         mainStack.axis = .horizontal
@@ -130,10 +147,10 @@ class SinglePokemonCardView: UIView {
         addSubview(mainStack)
         
         NSLayoutConstraint.activate([
-            mainStack.topAnchor.constraint(equalTo: topAnchor, constant: 4),
-            mainStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 4),
-            mainStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -4),
-            mainStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -4)
+            mainStack.topAnchor.constraint(equalTo: topAnchor, constant: 8),
+            mainStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
+            mainStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
+            mainStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8)
         ])
     }
     
