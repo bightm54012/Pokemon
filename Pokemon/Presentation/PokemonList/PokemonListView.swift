@@ -34,6 +34,7 @@ struct PokemonListView: View {
             }
             .padding(.bottom, 16)
         }
+        .navigationBarHidden(false)
         .background(Color(.systemGray5))
         .navigationTitle("All Pokémon")
         .task {
