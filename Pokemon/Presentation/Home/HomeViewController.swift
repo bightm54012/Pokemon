@@ -71,7 +71,21 @@ class HomeViewController: UIViewController {
         return label
     }()
     
-    private let seeMoreButton: UIButton = {
+    private let featuredSeeMoreButton: UIButton = {
+        let btn = UIButton(type: .system)
+        btn.setTitle("See more", for: .normal)
+        btn.titleLabel?.font = .systemFont(ofSize: 18, weight: .medium)
+        return btn
+    }()
+    
+    private let typesSeeMoreButton: UIButton = {
+        let btn = UIButton(type: .system)
+        btn.setTitle("See more", for: .normal)
+        btn.titleLabel?.font = .systemFont(ofSize: 18, weight: .medium)
+        return btn
+    }()
+    
+    private let regionSeeMoreButton: UIButton = {
         let btn = UIButton(type: .system)
         btn.setTitle("See more", for: .normal)
         btn.titleLabel?.font = .systemFont(ofSize: 18, weight: .medium)
@@ -98,6 +112,11 @@ class HomeViewController: UIViewController {
         favoritesCancellable = FavoritesManager.shared.$favoriteIDs.sink { [weak self] _ in
             self?.featuredCollection.reloadData()
         }
+        
+        let backButton = UIBarButtonItem()
+        backButton.title = ""
+        navigationItem.backBarButtonItem = backButton
+        navigationController?.navigationBar.tintColor = .black
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -109,18 +128,30 @@ class HomeViewController: UIViewController {
         scroll.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(scroll)
         
-        let featuredHeaderStack = UIStackView(arrangedSubviews: [featuredLabel, seeMoreButton])
+        let featuredHeaderStack = UIStackView(arrangedSubviews: [featuredLabel, featuredSeeMoreButton])
         featuredHeaderStack.axis = .horizontal
         featuredHeaderStack.alignment = .center
         featuredHeaderStack.spacing = 8
         featuredHeaderStack.distribution = .equalSpacing
         
+        let typesHeaderStack = UIStackView(arrangedSubviews: [typesLabel, typesSeeMoreButton])
+        typesHeaderStack.axis = .horizontal
+        typesHeaderStack.alignment = .center
+        typesHeaderStack.spacing = 8
+        typesHeaderStack.distribution = .equalSpacing
+        
+        let regionHeaderStack = UIStackView(arrangedSubviews: [regionsLabel, regionSeeMoreButton])
+        regionHeaderStack.axis = .horizontal
+        regionHeaderStack.alignment = .center
+        regionHeaderStack.spacing = 8
+        regionHeaderStack.distribution = .equalSpacing
+        
         let content = UIStackView(arrangedSubviews: [
             featuredHeaderStack,
             featuredCollection,
-            typesLabel,
+            typesHeaderStack,
             typesCollection,
-            regionsLabel,
+            regionHeaderStack,
             regionsCollection
         ])
         content.axis = .vertical
@@ -144,7 +175,7 @@ class HomeViewController: UIViewController {
             regionsCollection.heightAnchor.constraint(equalToConstant: 360)
         ])
         
-        seeMoreButton.addTarget(self, action: #selector(didTapSeeMore), for: .touchUpInside)
+        featuredSeeMoreButton.addTarget(self, action: #selector(didTapSeeMore), for: .touchUpInside)
     }
     
     private func setupCollectionViews() {
@@ -162,7 +193,7 @@ class HomeViewController: UIViewController {
     }
     
     private func setupActions() {
-        seeMoreButton.addTarget(self, action: #selector(didTapSeeMore), for: .touchUpInside)
+        featuredSeeMoreButton.addTarget(self, action: #selector(didTapSeeMore), for: .touchUpInside)
     }
     
     private func loadData() {

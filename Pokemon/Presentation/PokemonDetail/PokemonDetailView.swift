@@ -41,7 +41,7 @@ struct PokemonDetailView: View {
                                     }) {
                                         Image(systemName: "chevron.left")
                                             .font(.title3.bold())
-                                            .foregroundColor(.white)
+                                            .foregroundColor(.black)
                                             .padding()
                                             .background(Color.white.opacity(0.25))
                                             .clipShape(Circle())
