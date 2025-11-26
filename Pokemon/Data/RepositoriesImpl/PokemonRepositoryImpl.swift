@@ -14,7 +14,7 @@ public final class PokemonRepositoryImpl: PokemonRepository {
         self.network = network
     }
 
-    // 列表 API，補全詳細資料
+    // Pokemon
     public func fetchList(limit: Int, offset: Int) async throws -> [Pokemon] {
         let dto: PokemonListDTO = try await network.request(path: "pokemon", queryItems: [
             URLQueryItem(name: "limit", value: "\(limit)"),
@@ -39,16 +39,26 @@ public final class PokemonRepositoryImpl: PokemonRepository {
         
         return entities
     }
-
-    // 單體 Pokemon 詳細資料
+    
     public func fetchDetail(idOrName: String) async throws -> Pokemon {
         let dto: PokemonDTO = try await network.request(path: "pokemon/\(idOrName)")
         return dto.toEntity()
     }
 
-    // 類型列表
+    // Type
     public func fetchTypes() async throws -> [String] {
         let dto: TypeListDTO = try await network.request(path: "type")
         return dto.results.map { $0.name.capitalized }
+    }
+    
+    // Region
+    func fetchRegionsList() async throws -> [NamedAPIResource] {
+        let dto: NamedAPIResourceList = try await network.request(path: "region")
+        return dto.results
+    }
+    
+    func fetchRegionDetail(name: String) async throws -> RegionDetailDTO {
+        let dto: RegionDetailDTO = try await network.request(path: "region/\(name)")
+        return dto
     }
 }

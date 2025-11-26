@@ -22,8 +22,8 @@ class TypeCell: UICollectionViewCell {
             label.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             label.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
         ])
-        contentView.backgroundColor = .lightGray
         contentView.layer.cornerRadius = 8
+        contentView.layer.masksToBounds = true
     }
 
     required init?(coder: NSCoder) {
@@ -32,5 +32,6 @@ class TypeCell: UICollectionViewCell {
 
     func configure(with type: String) {
         label.text = type
+        contentView.backgroundColor = UIColor(Pokemon.typeColor(for: type))
     }
 }

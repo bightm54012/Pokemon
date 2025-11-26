@@ -50,18 +50,25 @@ class HomeViewController: UIViewController {
         return cv
     }()
     
+    private let regionsCollection: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .vertical
+        layout.minimumLineSpacing = 12
+        layout.minimumInteritemSpacing = 12
+
+        let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        cv.backgroundColor = .clear
+        cv.isScrollEnabled = false
+        return cv
+    }()
+    
+    private var regionLocations: [String: Int] = [:]
+    
     private let regionsLabel: UILabel = {
         let label = UILabel()
         label.text = "Regions"
         label.font = .boldSystemFont(ofSize: 24)
         return label
-    }()
-    
-    private let regionsStack: UIStackView = {
-        let stack = UIStackView()
-        stack.axis = .vertical
-        stack.spacing = 8
-        return stack
     }()
     
     private let seeMoreButton: UIButton = {
@@ -93,6 +100,10 @@ class HomeViewController: UIViewController {
         }
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        navigationController?.setNavigationBarHidden(false, animated: false)
+    }
+    
     private func setupViews() {
         let scroll = UIScrollView()
         scroll.translatesAutoresizingMaskIntoConstraints = false
@@ -110,7 +121,7 @@ class HomeViewController: UIViewController {
             typesLabel,
             typesCollection,
             regionsLabel,
-            regionsStack
+            regionsCollection
         ])
         content.axis = .vertical
         content.spacing = 16
@@ -129,7 +140,8 @@ class HomeViewController: UIViewController {
             content.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor, constant: -16),
             
             featuredCollection.heightAnchor.constraint(equalToConstant: 240),
-            typesCollection.heightAnchor.constraint(equalToConstant: 50)
+            typesCollection.heightAnchor.constraint(equalToConstant: 50),
+            regionsCollection.heightAnchor.constraint(equalToConstant: 360)
         ])
         
         seeMoreButton.addTarget(self, action: #selector(didTapSeeMore), for: .touchUpInside)
@@ -143,6 +155,10 @@ class HomeViewController: UIViewController {
         typesCollection.dataSource = self
         typesCollection.delegate = self
         typesCollection.register(TypeCell.self, forCellWithReuseIdentifier: "TypeCell")
+        
+        regionsCollection.dataSource = self
+        regionsCollection.delegate = self
+        regionsCollection.register(RegionCell.self, forCellWithReuseIdentifier: "RegionCell")
     }
     
     private func setupActions() {
@@ -152,36 +168,50 @@ class HomeViewController: UIViewController {
     private func loadData() {
         Task {
             do {
-                // 載入 featured Pokémon
+                // featured
                 let useCase = FetchPokemonListUseCase(repository: PokemonRepositoryImpl())
                 self.featuredPokemons = try await useCase.execute(limit: 9, offset: 0)
-                
-                // 載入 types
+
+                // types
                 let typeUseCase = FetchTypesUseCase(repository: PokemonRepositoryImpl())
                 self.types = try await typeUseCase.execute()
-                
-                // Regions
-                self.regions = ["Kanto", "Johto", "Hoenn", "Sinnoh", "Unova", "Kalos"]
-                
+
+                // Regions (use names exactly as API expects, lowercased later)
+                self.regions = ["kanto", "johto", "hoenn", "sinnoh", "unova", "kalos"]
+
+                // fetch location counts (async)
+                await loadRegionCounts()
+
                 DispatchQueue.main.async {
                     self.featuredCollection.reloadData()
                     self.typesCollection.reloadData()
-                    self.setupRegions()
+                    self.regionsCollection.reloadData()
                 }
-                
+
             } catch {
                 print("Load data error: \(error)")
             }
         }
     }
     
-    private func setupRegions() {
-        regionsStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+    private func loadRegionCounts() async {
+        guard !regions.isEmpty else { return }
+        let repo = PokemonRepositoryImpl()
+        var map: [String: Int] = [:]
+
         for region in regions {
-            let label = UILabel()
-            label.text = region
-            label.font = .systemFont(ofSize: 18)
-            regionsStack.addArrangedSubview(label)
+            do {
+                // PokeAPI region endpoint expects name in lowercase; ensure correct format
+                let detail = try await repo.fetchRegionDetail(name: region.lowercased())
+                map[region] = detail.locations.count
+            } catch {
+                print("failed to fetch region \(region): \(error)")
+                map[region] = 0
+            }
+        }
+
+        DispatchQueue.main.async {
+            self.regionLocations = map
         }
     }
     
@@ -197,8 +227,11 @@ extension HomeViewController: UICollectionViewDataSource, UICollectionViewDelega
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         if collectionView == featuredCollection {
             return Int(ceil(Double(featuredPokemons.count) / 3.0))
+        } else if collectionView == typesCollection {
+            return types.count
+        } else {
+            return regions.count
         }
-        return types.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -225,12 +258,18 @@ extension HomeViewController: UICollectionViewDataSource, UICollectionViewDelega
             }
             
             return cell
-        } else {
+        } else if collectionView == typesCollection {
             guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "TypeCell", for: indexPath) as? TypeCell else {
                 return UICollectionViewCell()
             }
             let type = types[indexPath.item]
             cell.configure(with: type)
+            return cell
+        } else {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "RegionCell", for: indexPath) as! RegionCell
+            let region = regions[indexPath.item]
+            let count = regionLocations[region] ?? 0
+            cell.configure(name: region, count: count)
             return cell
         }
     }
@@ -242,10 +281,7 @@ extension HomeViewController: UICollectionViewDataSource, UICollectionViewDelega
             let vc = UIHostingController(rootView: detailView)
             navigationController?.pushViewController(vc, animated: true)
         } else if collectionView == typesCollection {
-            let type = types[indexPath.item]
-            let listView = PokemonListView()
-            let vc = UIHostingController(rootView: listView)
-            navigationController?.pushViewController(vc, animated: true)
+            
         }
     }
 }
@@ -256,7 +292,12 @@ extension HomeViewController: UICollectionViewDelegateFlowLayout {
                         sizeForItemAt indexPath: IndexPath) -> CGSize {
         if collectionView == featuredCollection {
             return CGSize(width: 280, height: 240)
+        } else if collectionView == typesCollection {
+            return CGSize(width: 100, height: 50)
+        } else {
+            let totalSpacing: CGFloat = 12
+            let width = (collectionView.bounds.width - totalSpacing) / 2
+            return CGSize(width: width, height: 100)
         }
-        return CGSize(width: 100, height: 50) // types collection
     }
 }

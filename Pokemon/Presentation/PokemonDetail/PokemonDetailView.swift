@@ -149,7 +149,7 @@ struct PokemonDetailView: View {
             }
         }
         .ignoresSafeArea(.all)
-        .navigationBarHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
         .onAppear {
             Task { await vm.load() }
         }
