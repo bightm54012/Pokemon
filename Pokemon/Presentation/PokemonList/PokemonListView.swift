@@ -48,9 +48,10 @@ struct SinglePokemonCardListItem: View {
     @ObservedObject private var favorites = FavoritesManager.shared
     
     var body: some View {
-        HStack {
+        HStack(spacing: 12) {
             RemoteImage(url: pokemon.imageURL)
                 .frame(width: 60, height: 60)
+                .background(Color(uiColor: .systemGray5))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             
             VStack(alignment: .leading) {
@@ -59,17 +60,27 @@ struct SinglePokemonCardListItem: View {
                 Text("#\(pokemon.id)")
                     .font(.subheadline)
                     .foregroundColor(.gray)
-                Text(pokemon.types.joined(separator: ", "))
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
+                HStack(spacing: 4) {
+                    ForEach(pokemon.types, id: \.self) { type in
+                        Text(type.capitalized)
+                            .font(.caption)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Pokemon.typeColor(for: type))
+                            .cornerRadius(6)
+                    }
+                }
             }
             Spacer()
             
             Button(action: {
                 favorites.toggleFavorite(id: pokemon.id)
             }) {
-                Image(systemName: favorites.isFavorite(id: pokemon.id) ? "heart.fill" : "heart")
-                    .foregroundColor(.red)
+                Image(uiImage: favorites.isFavorite(id: pokemon.id) ? UIImage.pokeball : UIImage.pokeball_filled
+                )
+                .resizable()
+                .frame(width: 24, height: 24)
             }
         }
         .padding()

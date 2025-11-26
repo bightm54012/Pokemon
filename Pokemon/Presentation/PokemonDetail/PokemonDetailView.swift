@@ -54,25 +54,18 @@ struct PokemonDetailView: View {
                                         .foregroundColor(.white)
 
                                     Spacer()
-
-                                    // Favorite / Pokeball
+                                    
                                     Button(action: {
                                         FavoritesManager.shared.toggleFavorite(id: p.id)
                                         vm.objectWillChange.send()
                                     }) {
-                                        Image(
-                                            FavoritesManager.shared.isFavorite(id: p.id)
-                                            ? "pokeball_filled"
-                                            : "pokeball"
+                                        Image(uiImage: FavoritesManager.shared.isFavorite(id: p.id)
+                                                ? UIImage.pokeball
+                                                : UIImage.pokeball_filled
                                         )
                                         .resizable()
                                         .frame(width: 36, height: 36)
                                         .padding(10)
-                                        .background(
-                                            FavoritesManager.shared.isFavorite(id: p.id)
-                                            ? Color.red.opacity(0.7)
-                                            : Color.white.opacity(0.3)
-                                        )
                                         .clipShape(Circle())
                                     }
                                 }

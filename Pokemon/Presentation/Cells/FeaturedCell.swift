@@ -97,7 +97,7 @@ class SinglePokemonCardView: UIView {
     private let imageView = UIImageView()
     private let idLabel = UILabel()
     private let nameLabel = UILabel()
-    private let typeLabel = UILabel()
+    private let typesStack = UIStackView()
     let favoriteButton = UIButton(type: .system)
     
     var favoriteButtonAction: (() -> Void)?
@@ -125,40 +125,49 @@ class SinglePokemonCardView: UIView {
         
         idLabel.font = .systemFont(ofSize: 12)
         nameLabel.font = .systemFont(ofSize: 14, weight: .medium)
-        typeLabel.font = .systemFont(ofSize: 12)
-        typeLabel.numberOfLines = 1
         
-        favoriteButton.tintColor = .systemRed
         favoriteButton.translatesAutoresizingMaskIntoConstraints = false
-        favoriteButton.widthAnchor.constraint(equalToConstant: 24).isActive = true
-        favoriteButton.heightAnchor.constraint(equalToConstant: 24).isActive = true
+        favoriteButton.widthAnchor.constraint(equalToConstant: 32).isActive = true
+        favoriteButton.heightAnchor.constraint(equalToConstant: 32).isActive = true
         favoriteButton.addTarget(self, action: #selector(didTapFavorite), for: .touchUpInside)
         
-        let middleStack = UIStackView(arrangedSubviews: [UIStackView(arrangedSubviews: [idLabel, nameLabel]), typeLabel])
+        typesStack.axis = .horizontal
+        typesStack.spacing = 4
+        typesStack.alignment = .center
+        typesStack.distribution = .fillProportionally
+        typesStack.translatesAutoresizingMaskIntoConstraints = false
+
+        let middleStack = UIStackView(arrangedSubviews: [UIStackView(arrangedSubviews: [idLabel, nameLabel]), typesStack])
         middleStack.axis = .vertical
-        middleStack.spacing = 12
+        middleStack.spacing = 4
         middleStack.alignment = .leading
-        
+
         let mainStack = UIStackView(arrangedSubviews: [imageView, middleStack, favoriteButton])
         mainStack.axis = .horizontal
         mainStack.alignment = .center
         mainStack.spacing = 8
         mainStack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(mainStack)
-        
+
         NSLayoutConstraint.activate([
             mainStack.topAnchor.constraint(equalTo: topAnchor, constant: 8),
             mainStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
-            mainStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
-            mainStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8)
+            mainStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
+            mainStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12)
         ])
     }
     
     func configure(with poke: Pokemon) {
         idLabel.text = "#\(poke.id)"
         nameLabel.text = poke.name
-        typeLabel.text = poke.types.joined(separator: ", ")
         
+        typesStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        
+        for type in poke.types {
+            let label = createTypeLabel(for: type)
+            typesStack.addArrangedSubview(label)
+        }
+
         if let url = poke.imageURL {
             Task {
                 let image = await ImageLoader.shared.load(url: url)
@@ -167,13 +176,28 @@ class SinglePokemonCardView: UIView {
         } else {
             imageView.image = nil
         }
-        
+
         updateFavorite(isFav: FavoritesManager.shared.isFavorite(id: poke.id))
     }
     
     func updateFavorite(isFav: Bool) {
-        let sym = isFav ? "heart.fill" : "heart"
-        favoriteButton.setImage(UIImage(systemName: sym), for: .normal)
+        let image: UIImage = isFav ? .pokeballRed : .pokeballGray
+        favoriteButton.setImage(image, for: .normal)
+        favoriteButton.imageView?.contentMode = .scaleAspectFit
+        favoriteButton.contentHorizontalAlignment = .fill
+        favoriteButton.contentVerticalAlignment = .fill
+    }
+    
+    private func createTypeLabel(for type: String) -> UILabel {
+        let label = PaddingLabel()
+        label.text = type.capitalized
+        label.font = .systemFont(ofSize: 12, weight: .medium)
+        label.textColor = .white
+        label.backgroundColor = UIColor(Pokemon.typeColor(for: type))
+        label.layer.cornerRadius = 6
+        label.layer.masksToBounds = true
+        label.textAlignment = .center
+        return label
     }
     
     @objc private func didTapFavorite() {
@@ -181,3 +205,27 @@ class SinglePokemonCardView: UIView {
     }
 }
 
+class PaddingLabel: UILabel {
+    var topInset: CGFloat = 4
+    var bottomInset: CGFloat = 4
+    var leftInset: CGFloat = 10
+    var rightInset: CGFloat = 10
+
+    override func drawText(in rect: CGRect) {
+        let insets = UIEdgeInsets(
+            top: topInset,
+            left: leftInset,
+            bottom: bottomInset,
+            right: rightInset
+        )
+        super.drawText(in: rect.inset(by: insets))
+    }
+
+    override var intrinsicContentSize: CGSize {
+        let size = super.intrinsicContentSize
+        return CGSize(
+            width: size.width + leftInset + rightInset,
+            height: size.height + topInset + bottomInset
+        )
+    }
+}
