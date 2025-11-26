@@ -7,6 +7,16 @@
 
 import Foundation
 
+public struct Region {
+    public let name: String
+    public let url: String
+
+    public init(name: String, url: String) {
+        self.name = name
+        self.url = url
+    }
+}
+
 struct NamedAPIResource: Decodable {
     let name: String
     let url: String

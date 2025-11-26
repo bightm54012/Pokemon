@@ -52,11 +52,12 @@ public final class PokemonRepositoryImpl: PokemonRepository {
     }
     
     // Region
-    func fetchRegionsList() async throws -> [NamedAPIResource] {
+    public func fetchRegionsList() async throws -> [Region] {
         let dto: NamedAPIResourceList = try await network.request(path: "region")
-        return dto.results
+        return dto.results.map { Region(name: $0.name, url: $0.url) }
     }
     
+    // Internal detail fetch (optional)
     func fetchRegionDetail(name: String) async throws -> RegionDetailDTO {
         let dto: RegionDetailDTO = try await network.request(path: "region/\(name)")
         return dto

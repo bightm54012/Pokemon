@@ -169,25 +169,24 @@ class HomeViewController: UIViewController {
         Task {
             do {
                 // featured
-                let useCase = FetchPokemonListUseCase(repository: PokemonRepositoryImpl())
-                self.featuredPokemons = try await useCase.execute(limit: 9, offset: 0)
-
+                let listUseCase = FetchPokemonListUseCase(repository: PokemonRepositoryImpl())
+                self.featuredPokemons = try await listUseCase.execute(limit: 9, offset: 0)
+                
                 // types
                 let typeUseCase = FetchTypesUseCase(repository: PokemonRepositoryImpl())
                 self.types = try await typeUseCase.execute()
-
-                // Regions (use names exactly as API expects, lowercased later)
-                self.regions = ["kanto", "johto", "hoenn", "sinnoh", "unova", "kalos"]
-
-                // fetch location counts (async)
+                
+                let regionUseCase = FetchRegionsUseCase(repository: PokemonRepositoryImpl())
+                let allRegions = try await regionUseCase.execute()
+                self.regions = Array(allRegions.prefix(6)).map { $0.name }
+                
                 await loadRegionCounts()
-
+                
                 DispatchQueue.main.async {
                     self.featuredCollection.reloadData()
                     self.typesCollection.reloadData()
                     self.regionsCollection.reloadData()
                 }
-
             } catch {
                 print("Load data error: \(error)")
             }
