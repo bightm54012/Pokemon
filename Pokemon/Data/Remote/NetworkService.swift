@@ -19,7 +19,7 @@ public final class NetworkService {
     private let baseURL = URL(string: "https://pokeapi.co/api/v2")!
     private let session: URLSession
 
-    private init(session: URLSession = .shared) {
+    init(session: URLSession = .shared) {
         self.session = session
     }
 

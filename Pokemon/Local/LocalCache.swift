@@ -29,7 +29,7 @@ final class LocalCache {
         try data.write(to: url, options: .atomic)
     }
 
-    func load<T: Decodable>(_ type: T.Type, key: String) throws -> T {
+    func load<T: Codable>(_ type: T.Type, key: String) throws -> T {
         let url = folder.appendingPathComponent(key).appendingPathExtension("json")
         let data = try Data(contentsOf: url)
         return try JSONDecoder().decode(T.self, from: data)

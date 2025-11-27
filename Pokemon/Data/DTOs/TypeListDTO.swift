@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct TypeListDTO: Decodable {
-    struct Item: Decodable { let name: String; let url: String }
+struct TypeListDTO: Codable {
+    struct Item: Codable { let name: String; let url: String }
     let results: [Item]
 }

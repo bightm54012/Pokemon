@@ -17,19 +17,19 @@ public struct Region {
     }
 }
 
-struct NamedAPIResource: Decodable {
+struct NamedAPIResource: Codable {
     let name: String
     let url: String
 }
 
-struct NamedAPIResourceList: Decodable {
+struct NamedAPIResourceList: Codable {
     let count: Int?
     let next: String?
     let previous: String?
     let results: [NamedAPIResource]
 }
 
-struct RegionDetailDTO: Decodable {
+struct RegionDetailDTO: Codable {
     let id: Int
     let locations: [NamedAPIResource]
 }

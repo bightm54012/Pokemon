@@ -7,8 +7,8 @@
 
 import Foundation
 
-struct PokemonListDTO: Decodable {
-    struct ResultItem: Decodable {
+struct PokemonListDTO: Codable {
+    struct ResultItem: Codable {
         let name: String
         let url: String
     }

@@ -7,30 +7,30 @@
 
 import Foundation
 
-struct PokemonDTO: Decodable {
+struct PokemonDTO: Codable {
     let id: Int
     let name: String
     let sprites: Sprites
     let types: [TypeSlot]
     let weight: Int
     let height: Int
-    let stats: [StatSlot]   // 新增
+    let stats: [StatSlot]
 
-    struct Sprites: Decodable {
+    struct Sprites: Codable {
         let front_default: URL?
     }
 
-    struct TypeSlot: Decodable {
+    struct TypeSlot: Codable {
         let slot: Int
         let type: NamedResource
     }
 
-    struct NamedResource: Decodable {
+    struct NamedResource: Codable {
         let name: String
         let url: String
     }
 
-    struct StatSlot: Decodable {
+    struct StatSlot: Codable {
         let base_stat: Int
         let effort: Int
         let stat: NamedResource
@@ -40,8 +40,7 @@ struct PokemonDTO: Decodable {
 extension PokemonDTO {
     func toEntity() -> Pokemon {
         let t = types.map { $0.type.name }
-
-        // 從 stats 取對應屬性
+        
         func statValue(for name: String) -> Int {
             stats.first(where: { $0.stat.name.lowercased() == name.lowercased() })?.base_stat ?? 0
         }
